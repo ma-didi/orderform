@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+        "-//Apache Software Foundation//DTD Struts Configuration 2.5//EN"
+        "http://struts.apache.org/dtds/struts-2.5.dtd">
+<struts>
+    <package name="Orderform" extends="struts-default" strict-method-invocation="false">
+        <!--这里的class必须是Spring的IOC容器里取出来的-->
+        <action name="My_*" class="customerAction" method="{1}">
+            <result name="selectAndUser">page/main.jsp</result>
+            <result name="index">index.jsp</result>
+        </action>
+    </package>
+</struts>

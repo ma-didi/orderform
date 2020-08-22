@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/tx
+       https://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd">
+    <!--扫描路径，开启注解-->
+    <context:component-scan base-package="com.goods"/>
+    <!--扫描路径 将Action类注入-->
+    <bean id="customerAction" class="com.goods.action.CustomerAction" scope="prototype">
+    </bean>
+    <context:property-placeholder location="classpath:db.properties"/>
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${jdbc.driver}"/>
+        <property name="jdbcUrl" value="${jdbc.url}"/>
+        <property name="user" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+       <!-- <property name="acquireIncrement" value="3"/>
+        &lt;!&ndash;初始化连接大小&ndash;&gt;
+        <property name="initialPoolSize" value="10"/>
+        &lt;!&ndash;连接词最小空闲&ndash;&gt;
+        <property name="minPoolSize" value="2"/>
+        <property name="maxPoolSize" value="10"/>-->
+    </bean>
+    <!--hibernate和spring的整合-->
+    <bean class="org.springframework.orm.hibernate5.LocalSessionFactoryBean" id="sessionFactory">
+        <property name="dataSource" ref="dataSource"/>
+        <!--指定hibernate的核心文件位置-->
+        <property name="configLocations" value="classpath:hibernate.cfg.xml"/>
+    </bean>
+    <!--创建对象与对象注入-->
+    <bean class="com.goods.dao.impl.PorductDaoImpl" id="porductDao">
+        <property name="factory" ref="sessionFactory"></property>
+    </bean>
+    <bean id="porductSerice" class="com.goods.service.impl.PorductSericeimpl">
+        <property name="dao" ref="porductDao"></property>
+    </bean>
+    <bean id="txManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+    <tx:advice id="txAdcice" transaction-manager="txManager">
+        <!--规定所有以find，list，对数据库只有只读功能-->
+        <tx:attributes>
+            <tx:method name="find*" read-only="true"/>
+            <tx:method name="list*" read-only="true"/>
+            <tx:method name="update*"/>
+            <tx:method name="delete*"/>
+            <tx:method name="*"/>
+        </tx:attributes>
+    </tx:advice>
+    <!--配置aop-->
+    <aop:config>
+        <!--配置切点：具体哪些方法要增强-->
+        <aop:pointcut id="cut" expression="execution(* com.goods.service.*.*(..))"/>
+        <!-- 配置切面：将增强逻辑作用到切点 -->
+        <aop:advisor advice-ref="txAdcice" pointcut-ref="cut"/>
+    </aop:config>
+</beans>
